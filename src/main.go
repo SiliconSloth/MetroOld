@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-var allCommands = []*commands.Command{
+var allCommands = []commands.Command{
 	commands.Diff,
 	commands.Sync,
 	commands.Init,

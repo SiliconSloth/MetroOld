@@ -14,4 +14,4 @@ func printSyncHelp() {
 	fmt.Printf("Usage: metro sync <up | down | <url>>")
 }
 
-var Sync = newCommand("sync", "Sync with remote repo or something like that", execSync)
+var Sync = Command{"sync", "Sync with remote repo or something like that", execSync}

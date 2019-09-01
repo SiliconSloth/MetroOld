@@ -21,14 +21,6 @@ type Command struct {
 	Execute     func([]string, map[string]string, bool)
 }
 
-func newCommand(name string, description string, execute func([]string, map[string]string, bool)) *Command {
-	cmd := new(Command)
-	cmd.Name = name
-	cmd.Execute = execute
-	cmd.Description = description
-	return cmd
-}
-
 // Parse the arguments given to Metro on the command line.
 // args: The arguments to parse.
 // allOptions: The list of possible options.

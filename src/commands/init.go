@@ -10,4 +10,4 @@ func execInit(positionals []string, options map[string]string, hasHelpFlag bool)
 	}
 }
 
-var Init = newCommand("init", "Test git init", execInit)
+var Init = Command{"init", "Test git init", execInit}
