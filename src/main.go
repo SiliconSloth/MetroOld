@@ -9,6 +9,7 @@ import (
 var allCommands = []*commands.Command{
 	commands.Diff,
 	commands.Sync,
+	commands.Init,
 }
 
 var allOptions = []commands.Option{
