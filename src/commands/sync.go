@@ -1,8 +1,11 @@
 package commands
 
-import "fmt"
+import (
+	"fmt"
+	git "github.com/libgit2/git2go"
+)
 
-func execSync(positionals []string, options map[string]string) {
+func execSync(_ *git.Repository, positionals []string, options map[string]string) {
 	fmt.Println(options["timeout"])
 }
 

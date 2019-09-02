@@ -5,7 +5,7 @@ import (
 	"github.com/libgit2/git2go"
 )
 
-func execInit(positionals []string, options map[string]string) {
+func execInit(_ *git.Repository, positionals []string, options map[string]string) {
 	println("Initing!")
 	_, err := git.InitRepository("test/.git", false) // TODO change to just .git
 	if err != nil {

@@ -1,8 +1,11 @@
 package commands
 
-import "fmt"
+import (
+	"fmt"
+	git "github.com/libgit2/git2go"
+)
 
-func execDiff(positionals []string, options map[string]string) {
+func execDiff(_ *git.Repository, positionals []string, options map[string]string) {
 	println("Diff is not yet implemented.")
 }
 

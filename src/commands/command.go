@@ -2,6 +2,7 @@ package commands
 
 import (
 	"errors"
+	git "github.com/libgit2/git2go"
 	"strings"
 )
 
@@ -18,7 +19,7 @@ type Option struct {
 type Command struct {
 	Name        string
 	Description string
-	Execute     func([]string, map[string]string)
+	Execute     func(*git.Repository, []string, map[string]string)
 	Help     	func([]string, map[string]string)
 }
 

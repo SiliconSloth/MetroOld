@@ -3,6 +3,7 @@ package main
 import (
 	"commands"
 	"fmt"
+	git "github.com/libgit2/git2go"
 	"os"
 )
 
@@ -27,6 +28,8 @@ func handleCommand() bool {
 		return false
 	}
 
+	repo, err := git.OpenRepository(".") // TODO support specific directories?
+
 	// If we have a sub-command, get it and finds the associated command,
 	// sending associated data to be executed
 	if len(positionals) > 0 {
@@ -37,7 +40,7 @@ func handleCommand() bool {
 					cmd.Help(positionals[1:], options)
 				} else {
 					// Pass in all positionals after the sub-command.
-					cmd.Execute(positionals[1:], options)
+					cmd.Execute(repo, positionals[1:], options)
 				}
 				return true
 			}
