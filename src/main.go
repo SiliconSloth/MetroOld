@@ -6,18 +6,6 @@ import (
 	"os"
 )
 
-var allCommands = []commands.Command{
-	commands.Diff,
-	commands.Sync,
-	commands.Init,
-}
-
-var allOptions = []commands.Option{
-	{"help", "h", false},
-	{"force", "f", false},
-	{"timeout", "t", true},
-}
-
 func main() {
 	positionals, options, hasHelpFlag, err := commands.ParseArgs(os.Args, allOptions)
 	if err != nil {
