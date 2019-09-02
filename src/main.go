@@ -15,12 +15,15 @@ func main() {
 	}
 }
 
+// Gets the current arguments of the program and finds and runs the correct associated subcommand
+//
+// Returns: True if successful, False if the command fails in any way
 func handleCommand() bool {
 	positionals, options, hasHelpFlag, err := commands.ParseArgs(os.Args, allOptions)
 
 	if err != nil {
 		// Display the error, print the help text then exit.
-		println(err.Error())
+		fmt.Println(err.Error())
 		return false
 	}
 
@@ -45,6 +48,7 @@ func handleCommand() bool {
 	return false
 }
 
+// Prints a generic help command with all commands listed
 func printHelp() {
 	fmt.Println("Usage: metro <command> <args> [options]")
 	for _, cmd := range allCommands {
