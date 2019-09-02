@@ -30,8 +30,13 @@ func handleCommand() bool {
 		argCmd := positionals[0]
 		for _, cmd := range allCommands {
 			if cmd.Name == argCmd {
-				cmd.Execute(positionals[1:], options, hasHelpFlag) // Pass in all positionals after the sub-command.
-				return true                                        // Don't print the help text below.
+				if hasHelpFlag {
+					cmd.Help(positionals[1:], options)
+				} else {
+					// Pass in all positionals after the sub-command.
+					cmd.Execute(positionals[1:], options)
+				}
+				return true
 			}
 		}
 		fmt.Printf("Invalid command: %s\n", argCmd)
