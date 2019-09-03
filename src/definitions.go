@@ -8,6 +8,7 @@ var allCommands = []commands.Command{
 	commands.Sync,
 	commands.Init,
 	commands.Status,
+	commands.Checkpoint,
 }
 
 // List of option tags
