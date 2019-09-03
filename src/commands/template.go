@@ -5,8 +5,8 @@ import (
 	git "github.com/libgit2/git2go"
 )
 
-func execTemplate(_ *git.Repository, positionals []string, options map[string]string) {
-
+func execTemplate(_ *git.Repository, positionals []string, options map[string]string) error {
+	return nil
 }
 
 func printTemplateHelp(_ []string, _ map[string]string) {
@@ -14,4 +14,3 @@ func printTemplateHelp(_ []string, _ map[string]string) {
 }
 
 var Template = Command{"template", "Template Command", execTemplate, printTemplateHelp}
-

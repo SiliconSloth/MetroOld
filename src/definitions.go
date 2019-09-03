@@ -4,7 +4,6 @@ import "commands"
 
 // List of all commands available
 var allCommands = []commands.Command{
-	commands.Diff,
 	commands.Sync,
 	commands.Init,
 	commands.Status,

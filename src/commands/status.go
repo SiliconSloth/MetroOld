@@ -5,7 +5,8 @@ import (
 	"github.com/libgit2/git2go"
 )
 
-func execStatus(repo *git.Repository, positionals []string, options map[string]string) {
+func execStatus(repo *git.Repository, positionals []string, options map[string]string) error {
+	return nil
 }
 
 func printStatusHelp(_ []string, _ map[string]string) {
@@ -13,4 +14,3 @@ func printStatusHelp(_ []string, _ map[string]string) {
 }
 
 var Status = Command{"status", "Status Command", execStatus, printStatusHelp}
-
