@@ -19,8 +19,8 @@ type Option struct {
 type Command struct {
 	Name        string
 	Description string
-	Execute     func(*git.Repository, []string, map[string]string)
-	Help     	func([]string, map[string]string)
+	Execute     func(*git.Repository, []string, map[string]string) error
+	Help        func([]string, map[string]string)
 }
 
 // Parse the arguments given to Metro on the command line.

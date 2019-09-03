@@ -5,8 +5,9 @@ import (
 	git "github.com/libgit2/git2go"
 )
 
-func execSync(_ *git.Repository, positionals []string, options map[string]string) {
+func execSync(_ *git.Repository, positionals []string, options map[string]string) error {
 	fmt.Println(options["timeout"])
+	return nil
 }
 
 func printSyncHelp(_ []string, _ map[string]string) {

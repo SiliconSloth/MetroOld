@@ -9,28 +9,26 @@ import (
 
 func main() {
 	success := handleCommand()
-
 	if !success {
-		// If no command was given or the command or arguments were invalid, show the general help text.
+		// If no command was given or the command was invalid, show the general help text.
 		printHelp()
 	}
 }
 
-// Gets the current arguments of the program and finds and runs the correct associated subcommand
+// Gets the current arguments of the program and runs the specified subcommand
 //
-// Returns: True if successful, False if the command fails in any way
+// Returns: true if the command was found, false if no valid command was specified.
 func handleCommand() bool {
 	positionals, options, hasHelpFlag, err := commands.ParseArgs(os.Args, allOptions)
-
 	if err != nil {
 		// Display the error, print the help text then exit.
 		fmt.Println(err.Error())
 		return false
 	}
 
-	repo, err := git.OpenRepository(".") // TODO support specific directories?
+	repo, err := git.OpenRepository(".")
 
-	// If we have a sub-command, get it and finds the associated command,
+	// If we have a sub-command, get it and find the associated command,
 	// sending associated data to be executed
 	if len(positionals) > 0 {
 		argCmd := positionals[0]
@@ -40,7 +38,11 @@ func handleCommand() bool {
 					cmd.Help(positionals[1:], options)
 				} else {
 					// Pass in all positionals after the sub-command.
-					cmd.Execute(repo, positionals[1:], options)
+					err := cmd.Execute(repo, positionals[1:], options)
+					if err != nil {
+						fmt.Println(err.Error())
+						cmd.Help(positionals[1:], options)
+					}
 				}
 				return true
 			}
