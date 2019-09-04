@@ -72,13 +72,13 @@ func Commit(repo *git.Repository, message string, parentRevs ...string) error {
 	return nil
 }
 
-// Gets the commit of the given name
-// name - Name of the Commit to find
-// repo - Repo to find the Commit in
+// Gets the commit corresponding to the given revision
+// revision - Revision of the commit to find
+// repo - Repo to find the commit in
 //
-// returns commit of name and error
-func getCommit(name string, repo *git.Repository) (*git.Commit, error) {
-	obj, err := repo.RevparseSingle(name)
+// Returns the commit
+func getCommit(revision string, repo *git.Repository) (*git.Commit, error) {
+	obj, err := repo.RevparseSingle(revision)
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +89,8 @@ func getCommit(name string, repo *git.Repository) (*git.Commit, error) {
 	return commit, nil
 }
 
+// Create a new branch from the current head with the specified name.
+// Returns the branch
 func CreateBranch(name string, repo *git.Repository) (*git.Branch, error) {
 	commit, err := getCommit("HEAD", repo)
 	if err != nil {

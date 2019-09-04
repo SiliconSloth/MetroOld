@@ -3,13 +3,13 @@ package commands
 import (
 	"errors"
 	"fmt"
-git "github.com/libgit2/git2go"
+	git "github.com/libgit2/git2go"
 	"gitwrapper"
 )
 
 func execLine(repo *git.Repository, positionals []string, options map[string]string) error {
 	if len(positionals) < 1 {
-		return errors.New("Branch name required.")
+		return errors.New("Line name required.")
 	}
 	if len(positionals) > 1 {
 		return errors.New("Unexpected argument: " + positionals[1])
@@ -21,8 +21,7 @@ func execLine(repo *git.Repository, positionals []string, options map[string]str
 		return err
 	}
 
-	println("Created ")
-
+	fmt.Println("Created line " + name + ".")
 	return nil
 }
 
