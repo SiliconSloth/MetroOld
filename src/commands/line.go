@@ -7,7 +7,7 @@ import (
 	"gitwrapper"
 )
 
-func execLine(repo *git.Repository, positionals []string, options map[string]string) error {
+func execLine(repo *git.Repository, positionals []string, _ map[string]string) error {
 	if len(positionals) < 1 {
 		return errors.New("Line name required.")
 	}
@@ -29,4 +29,4 @@ func printLineHelp(_ []string, _ map[string]string) {
 	fmt.Println("Usage: metro line <name>")
 }
 
-var Line = Command{"line", "Line Command", execLine, printLineHelp}
+var Line = Command{"line", "Create a new line", execLine, printLineHelp}

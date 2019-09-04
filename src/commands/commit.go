@@ -7,7 +7,7 @@ import (
 	"gitwrapper"
 )
 
-func execCheckpoint(repo *git.Repository, positionals []string, _ map[string]string) error {
+func execCommit(repo *git.Repository, positionals []string, _ map[string]string) error {
 	if len(positionals) < 1 {
 		return errors.New("Message required.")
 	}
@@ -21,12 +21,12 @@ func execCheckpoint(repo *git.Repository, positionals []string, _ map[string]str
 		return err
 	}
 
-	fmt.Println("Saved checkpoint to current branch.")
+	fmt.Println("Saved commit to current branch.")
 	return nil
 }
 
-func printCheckpointHelp(_ []string, _ map[string]string) {
-	fmt.Println("Usage: metro checkpoint <message>")
+func printCommitHelp(_ []string, _ map[string]string) {
+	fmt.Println("Usage: metro commit <message>")
 }
 
-var Checkpoint = Command{"checkpoint", "Checkpoint Command", execCheckpoint, printCheckpointHelp}
+var Commit = Command{"commit", "Make a commit", execCommit, printCommitHelp}

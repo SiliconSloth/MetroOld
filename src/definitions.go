@@ -7,7 +7,7 @@ var allCommands = []commands.Command{
 	commands.Sync,
 	commands.Init,
 	commands.Status,
-	commands.Checkpoint,
+	commands.Commit,
 	commands.Switch,
 	commands.Line,
 }

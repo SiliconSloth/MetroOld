@@ -37,4 +37,4 @@ func printCreateHelp(_ []string, _ map[string]string) {
 	fmt.Printf("Usage: metro create [directory]")
 }
 
-var Init = Command{"create", "Create a blank repo", execCreate, printCreateHelp}
+var Init = Command{"create", "Create a repo", execCreate, printCreateHelp}
