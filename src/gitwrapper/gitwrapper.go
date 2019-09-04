@@ -55,14 +55,11 @@ func Commit(repo *git.Repository, message string, parentRevs ...string) error {
 	// Retrieve the commit objects associated with the given parent revisions.
 	var parentCommits []*git.Commit
 	for _, parentRev := range parentRevs {
-		parentObj, err := repo.RevparseSingle(parentRev)
+		parentCommit, err := getCommit(parentRev, repo)
 		if err != nil {
 			return err
 		}
-		parentCommit, err := parentObj.AsCommit()
-		if err != nil {
-			return err
-		}
+
 		parentCommits = append(parentCommits, parentCommit)
 	}
 
@@ -73,4 +70,35 @@ func Commit(repo *git.Repository, message string, parentRevs ...string) error {
 	}
 
 	return nil
+}
+
+// Gets the commit of the given name
+// name - Name of the Commit to find
+// repo - Repo to find the Commit in
+//
+// returns commit of name and error
+func getCommit(name string, repo *git.Repository) (*git.Commit, error) {
+	obj, err := repo.RevparseSingle(name)
+	if err != nil {
+		return nil, err
+	}
+	commit, err := obj.AsCommit()
+	if err != nil {
+		return nil, err
+	}
+	return commit, nil
+}
+
+func CreateBranch(name string, repo *git.Repository) (*git.Branch, error) {
+	commit, err := getCommit("HEAD", repo)
+	if err != nil {
+		return nil, err
+	}
+
+	branch, err := repo.CreateBranch(name, commit, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return branch, nil
 }
