@@ -2,6 +2,8 @@ package gitwrapper
 
 import (
 	git "github.com/libgit2/git2go"
+	"helper"
+	"strings"
 	"time"
 )
 
@@ -29,8 +31,13 @@ func Commit(repo *git.Repository, message string, parentRevs ...string) error {
 		return err
 	}
 
+	// Finds any ignore files
+	ignore := make([]string, 0)
+	ignore = append(ignore, strings.Split(helper.GetFileContents(repo.Workdir() + "/.gitignore"), "\n")...)
+	ignore = append(ignore, strings.Split(helper.GetFileContents(repo.Workdir() + "/.metroignore"), "\n")...)
+
 	// Stage all the files in the repo directory (excluding those in .gitignore) for the commit.
-	err = index.AddAll(nil, git.IndexAddDefault, nil)
+	err = index.AddAll(ignore, git.IndexAddDisablePathspecMatch, nil)
 	if err != nil {
 		return err
 	}
