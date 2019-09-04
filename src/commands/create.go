@@ -24,7 +24,7 @@ func execCreate(repo *git.Repository, positionals []string, _ map[string]string)
 	if err != nil {
 		return err
 	}
-	err = gitwrapper.Commit(repo, "Create repository")
+	err = gitwrapper.Commit(repo, "Create Repository")
 	if err != nil {
 		return err
 	}
