@@ -9,14 +9,19 @@ import (
 
 func execSwitch(repo *git.Repository, positionals []string, _ map[string]string) error {
 	if len(positionals) < 1 {
-		return errors.New("Line name required.")
+		return errors.New("line name required")
 	}
 	if len(positionals) > 1 {
-		return errors.New("Unexpected argument: " + positionals[1])
+		return errors.New("unexpected argument: " + positionals[1])
 	}
 	name := positionals[0]
 
-	return gitwrapper.CheckoutBranch(name, repo)
+	err := gitwrapper.WIPCommit(repo)
+	if err != nil {return err}
+	err = gitwrapper.CheckoutBranch(name, repo)
+	if err != nil {return err}
+	err = gitwrapper.WIPUncommit(repo)
+	return err
 }
 
 func printSwitchHelp(_ []string, _ map[string]string) {
