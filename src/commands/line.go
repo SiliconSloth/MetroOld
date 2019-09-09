@@ -5,6 +5,8 @@ import (
 	"fmt"
 	git "github.com/libgit2/git2go"
 	"gitwrapper"
+	"helper"
+	"strings"
 )
 
 func execLine(repo *git.Repository, positionals []string, _ map[string]string) error {
@@ -15,6 +17,10 @@ func execLine(repo *git.Repository, positionals []string, _ map[string]string) e
 		return errors.New("Unexpected argument: " + positionals[1])
 	}
 	name := positionals[0]
+
+	if strings.HasSuffix(name, helper.WipString) {
+		return errors.New("Line name can't end in " + helper.WipString)
+	}
 
 	_, err := gitwrapper.CreateBranch(name, repo)
 	if err != nil {

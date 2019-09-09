@@ -5,6 +5,8 @@ import (
 	"fmt"
 	git "github.com/libgit2/git2go"
 	"gitwrapper"
+	"helper"
+	"strings"
 )
 
 func execSwitch(repo *git.Repository, positionals []string, _ map[string]string) error {
@@ -15,6 +17,10 @@ func execSwitch(repo *git.Repository, positionals []string, _ map[string]string)
 		return errors.New("Unexpected argument: " + positionals[1])
 	}
 	name := positionals[0]
+
+	if strings.HasSuffix(name, helper.WipString) {
+		return errors.New("Can't switch to wip branch.")
+	}
 
 	err := gitwrapper.WIPCommit(repo)
 	if err != nil {return err}
