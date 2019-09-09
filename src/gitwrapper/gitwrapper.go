@@ -151,9 +151,9 @@ func branchExists(name string, repo *git.Repository) bool {
 }
 
 func deleteBranch(name string, repo *git.Repository) error {
-	wipBranch, err := repo.LookupBranch(name, git.BranchLocal)
+	branch, err := repo.LookupBranch(name, git.BranchLocal)
 	if err != nil {return err}
-	err = wipBranch.Delete()
+	err = branch.Delete()
 	if err != nil {return err}
 
 	return nil
@@ -178,19 +178,19 @@ func WIPCommit(repo *git.Repository) error {
 
 	name, err := currentBranchName(repo)
 	if err != nil {return err}
-	if strings.HasSuffix(name, "-wip") {
+	if strings.HasSuffix(name, helper.WipString) {
 		return nil
 	}
 
 	// If WIP already exists, delete
-	if branchExists(name + "-wip", repo) {
-		err = deleteBranch(name + "-wip", repo)
+	if branchExists(name + helper.WipString, repo) {
+		err = deleteBranch(name + helper.WipString, repo)
 		if err != nil {return err}
 	}
 
-	_, err = CreateBranch(name + "-wip", repo)
+	_, err = CreateBranch(name + helper.WipString, repo)
 	if err != nil {return err}
-	err = moveHead(name + "-wip", repo)
+	err = moveHead(name + helper.WipString, repo)
 	if err != nil {return err}
 	err = Commit(repo, "WIP", "HEAD^{commit}")
 	if err != nil {return err}
@@ -204,13 +204,13 @@ func WIPUncommit(repo *git.Repository) error {
 	if err != nil {return err}
 
 	// No WIP branch
-	if !branchExists(name + "-wip", repo) {
+	if !branchExists(name + helper.WipString, repo) {
 		return nil
 	}
-	err = checkout(name + "-wip", repo)
+	err = checkout(name + helper.WipString, repo)
 	if err != nil {return err}
 
-	err = deleteBranch(name + "-wip", repo)
+	err = deleteBranch(name + helper.WipString, repo)
 	if err != nil {return err}
 
 	return nil

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	git "github.com/libgit2/git2go"
 	"gitwrapper"
+	"helper"
 	"strings"
 )
 
@@ -17,7 +18,7 @@ func execSwitch(repo *git.Repository, positionals []string, _ map[string]string)
 	}
 	name := positionals[0]
 
-	if strings.HasSuffix(name, "-wip") {
+	if strings.HasSuffix(name, helper.WipString) {
 		return errors.New("Can't switch to wip branch.")
 	}
 
