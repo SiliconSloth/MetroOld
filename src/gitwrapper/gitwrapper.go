@@ -110,6 +110,7 @@ func CreateBranch(name string, repo *git.Repository) (*git.Branch, error) {
 
 // Checks out the given branch by name
 // name - Plain Text branch name (e.g. 'master')
+// soft - Whether to do a soft checkout
 // repo - Repo to checkout from
 func CheckoutBranch(name string, repo *git.Repository) error {
 	err := checkout(name, repo)
@@ -144,7 +145,21 @@ func checkout(name string, repo *git.Repository) error {
 	return err
 }
 
-// If anything is added, creates a commit called WIP
+func branchExists(name string, repo *git.Repository) bool {
+	_, err := getCommit(name, repo)
+	return err == nil
+}
+
+func deleteBranch(name string, repo *git.Repository) error {
+	wipBranch, err := repo.LookupBranch(name, git.BranchLocal)
+	if err != nil {return err}
+	err = wipBranch.Delete()
+	if err != nil {return err}
+
+	return nil
+}
+
+// If anything is added, creates a new branch with a commit called WIP
 func WIPCommit(repo *git.Repository) error {
 	statusOps := git.StatusOptions{
 		Show: git.StatusShowIndexAndWorkdir,
@@ -161,16 +176,43 @@ func WIPCommit(repo *git.Repository) error {
 		return nil
 	}
 
-	return Commit(repo, "WIP", "HEAD^{commit}")
+	name, err := currentBranchName(repo)
+	if err != nil {return err}
+	if strings.HasSuffix(name, "-wip") {
+		return nil
+	}
+
+	// If WIP already exists, delete
+	if branchExists(name + "-wip", repo) {
+		err = deleteBranch(name + "-wip", repo)
+		if err != nil {return err}
+	}
+
+	_, err = CreateBranch(name + "-wip", repo)
+	if err != nil {return err}
+	err = moveHead(name + "-wip", repo)
+	if err != nil {return err}
+	err = Commit(repo, "WIP", "HEAD^{commit}")
+	if err != nil {return err}
+
+	return nil
 }
 
 // Deletes the WIP commit at head if any
 func WIPUncommit(repo *git.Repository) error {
-	commit, err := getCommit("HEAD", repo)
+	name, err := currentBranchName(repo)
 	if err != nil {return err}
-	if commit.Message() == "WIP" {
-		return RevertLast(repo, false)
+
+	// No WIP branch
+	if !branchExists(name + "-wip", repo) {
+		return nil
 	}
+	err = checkout(name + "-wip", repo)
+	if err != nil {return err}
+
+	err = deleteBranch(name + "-wip", repo)
+	if err != nil {return err}
+
 	return nil
 }
 
@@ -201,6 +243,19 @@ func RevertLast(repo *git.Repository, reset bool) error {
 	}
 
 	return err
+}
+
+func currentBranchName(repo *git.Repository) (string, error) {
+	iterator, err := repo.NewBranchIterator(git.BranchLocal)
+	if err != nil {return "", err}
+	for branch, _, err := iterator.Next(); err == nil; branch, _, err = iterator.Next() {
+		head, err := branch.IsHead()
+		if err != nil {return "", err}
+		if head {
+			return branch.Name()
+		}
+	}
+	return "", errors.New("Could not find current branch.")
 }
 
 // Returns the path specs for the Ignore files
