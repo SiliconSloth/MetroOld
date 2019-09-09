@@ -110,7 +110,6 @@ func CreateBranch(name string, repo *git.Repository) (*git.Branch, error) {
 
 // Checks out the given branch by name
 // name - Plain Text branch name (e.g. 'master')
-// soft - Whether to do a soft checkout
 // repo - Repo to checkout from
 func CheckoutBranch(name string, repo *git.Repository) error {
 	err := checkout(name, repo)
