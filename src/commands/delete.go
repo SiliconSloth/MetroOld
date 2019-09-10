@@ -22,14 +22,12 @@ func execDelete(repo *git.Repository, positionals []string, options map[string]s
 			deletes, err = strconv.Atoi(positionals[1])
 			if err != nil { return err }
 		}
-		for ; deletes > 0; deletes-- {
-			err := gitwrapper.RevertLast(repo, false)
-			if err != nil { return err }
-		}
+		return gitwrapper.RevertCommit(repo, deletes, false)
 	}
 	if positionals[0] == "line" {
 		fmt.Println("Usage: metro delete line line-name")
 	}
+	return nil
 }
 
 func printDeleteHelp(positionals []string, _ map[string]string) {
