@@ -10,7 +10,7 @@ import (
 
 func execDelete(repo *git.Repository, positionals []string, options map[string]string) error {
 	if len(positionals) < 1 || (positionals[0] != "commit" && positionals[0] != "line") {
-		return errors.New("Incorrect Paramater.")
+		return errors.New("Incorrect paramater.")
 	}
 	if positionals[0] == "commit" {
 		if len(positionals) > 2 {
