@@ -3,6 +3,8 @@ package gitwrapper
 import (
 	"errors"
 	git "github.com/libgit2/git2go"
+	"helper"
+	"strings"
 	"time"
 )
 
@@ -92,21 +94,24 @@ func RevertLastCommit(repo *git.Repository, reset bool) error {
 	return RevertCommit(repo, 1, reset)
 }
 
-
 // Reverts the last commit WITHOUT leaving a trace of the reverted commit
 // commitsBack - How many commits back to revert
 // reset - If true, commit is deleted and working directory reset to last commit
 //		   Otherwise working directory is unchanged
 func RevertCommit(repo *git.Repository, commitsBack int, reset bool) error {
-	if commitsBack < 1 { return errors.New("Invalid commit to delete.") }
+	if commitsBack < 1 {
+		return errors.New("Invalid commit to delete.")
+	}
 
 	// Gets head commit
 	commit, err := getCommit("HEAD", repo)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	// Gets commit before head
 	oldCommit := commit
-	for ; commitsBack > 0; commitsBack -- {
+	for ; commitsBack > 0; commitsBack-- {
 		oldCommit = oldCommit.Parent(0)
 		if oldCommit == nil {
 			return errors.New("head has no parent")
@@ -118,14 +123,96 @@ func RevertCommit(repo *git.Repository, commitsBack int, reset bool) error {
 	checkoutOps := git.CheckoutOpts{}
 	checkoutOps.Strategy = git.CheckoutForce
 	var resetType git.ResetType
-	if reset { resetType = git.ResetHard } else { resetType = git.ResetSoft }
+	if reset {
+		resetType = git.ResetHard
+	} else {
+		resetType = git.ResetSoft
+	}
 	err = repo.ResetToCommit(oldCommit, resetType, &checkoutOps)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	return err
 }
 
-
-func GetLastCommit(repo *git.Repository)  (*git.Commit, error) {
+func GetLastCommit(repo *git.Repository) (*git.Commit, error) {
 	return getCommit("HEAD", repo)
+}
+
+// If anything is added, creates a new branch with a commit called WIP
+func WIPCommit(repo *git.Repository) error {
+	statusOps := git.StatusOptions{
+		Show:     git.StatusShowIndexAndWorkdir,
+		Flags:    git.StatusOptIncludeUntracked,
+		Pathspec: pathSpecs(repo),
+	}
+	status, err := repo.StatusList(&statusOps)
+	if err != nil {
+		return err
+	}
+	count, err := status.EntryCount()
+	if err != nil {
+		return err
+	}
+
+	// If nothing to commit, don't bother with a WIP
+	if count == 0 {
+		return nil
+	}
+
+	name, err := CurrentBranchName(repo)
+	if err != nil {
+		return err
+	}
+	if strings.HasSuffix(name, helper.WipString) {
+		return nil
+	}
+
+	// If WIP already exists, delete
+	if BranchExists(name+helper.WipString, repo) {
+		err = DeleteBranch(name+helper.WipString, repo)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = CreateBranch(name+helper.WipString, repo)
+	if err != nil {
+		return err
+	}
+	err = moveHead(name+helper.WipString, repo)
+	if err != nil {
+		return err
+	}
+	err = Commit(repo, "WIP", "HEAD^{commit}")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Deletes the WIP commit at head if any
+func WIPUncommit(repo *git.Repository) error {
+	name, err := CurrentBranchName(repo)
+	if err != nil {
+		return err
+	}
+
+	// No WIP branch
+	if !BranchExists(name+helper.WipString, repo) {
+		return nil
+	}
+	err = checkout(name+helper.WipString, repo)
+	if err != nil {
+		return err
+	}
+
+	err = DeleteBranch(name+helper.WipString, repo)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
