@@ -8,18 +8,20 @@ import (
 )
 
 func execPatch(repo *git.Repository, positionals []string, options map[string]string) error {
+	// Uses existing message as default
 	commit, err := gitwrapper.GetLastCommit(repo)
 	if err != nil {return err}
 	message := commit.Message()
 
 	if len(positionals) == 1 {
+		// Overrides message
 		message = positionals[0]
 	}
 	if len(positionals) > 1 {
 		return errors.New("Unexpected argument: " + positionals[1])
 	}
 
-	err = gitwrapper.RevertLast(repo, false)
+	err = gitwrapper.RevertLastCommit(repo, false)
 	if err != nil {return err}
 	err = gitwrapper.Commit(repo, message, "HEAD^{commit}")
 	if err != nil {return err}

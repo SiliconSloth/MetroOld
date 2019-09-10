@@ -88,7 +88,7 @@ func getCommit(revision string, repo *git.Repository) (*git.Commit, error) {
 // Reverts the last commit WITHOUT leaving a trace of the reverted commit
 // reset - If true, the repo is reset back to the last commit
 //		   Otherwise, the commit is reverted without resetting the data
-func RevertLast(repo *git.Repository, reset bool) error {
+func RevertLastCommit(repo *git.Repository, reset bool) error {
 	// Gets head commit
 	commit, err := getCommit("HEAD", repo)
 	if err != nil {return err}
