@@ -89,13 +89,29 @@ func getCommit(revision string, repo *git.Repository) (*git.Commit, error) {
 // reset - If true, commit is deleted and working directory reset to last commit
 //		   Otherwise working directory is unchanged
 func RevertLastCommit(repo *git.Repository, reset bool) error {
+	return RevertCommit(repo, 1, reset)
+}
+
+
+// Reverts the last commit WITHOUT leaving a trace of the reverted commit
+// commitsBack - How many commits back to revert
+// reset - If true, commit is deleted and working directory reset to last commit
+//		   Otherwise working directory is unchanged
+func RevertCommit(repo *git.Repository, commitsBack int, reset bool) error {
+	if commitsBack < 1 { return errors.New("Invalid commit to delete.") }
+
 	// Gets head commit
 	commit, err := getCommit("HEAD", repo)
 	if err != nil {return err}
 
 	// Gets commit before head
-	oldCommit := commit.Parent(0)
-	if oldCommit == nil {return errors.New("head has no parent")}
+	oldCommit := commit
+	for ; commitsBack > 0; commitsBack -- {
+		oldCommit = oldCommit.Parent(0)
+		if oldCommit == nil {
+			return errors.New("head has no parent")
+		}
+	}
 
 	// Resets head to the last commit, deleting the current head
 	// If reset is true, also resets working directory

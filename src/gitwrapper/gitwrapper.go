@@ -28,7 +28,7 @@ func WIPCommit(repo *git.Repository) error {
 		return nil
 	}
 
-	name, err := currentBranchName(repo)
+	name, err := CurrentBranchName(repo)
 	if err != nil {return err}
 	if strings.HasSuffix(name, helper.WipString) {
 		return nil
@@ -36,7 +36,7 @@ func WIPCommit(repo *git.Repository) error {
 
 	// If WIP already exists, delete
 	if branchExists(name + helper.WipString, repo) {
-		err = deleteBranch(name + helper.WipString, repo)
+		err = DeleteBranch(name + helper.WipString, repo)
 		if err != nil {return err}
 	}
 
@@ -52,7 +52,7 @@ func WIPCommit(repo *git.Repository) error {
 
 // Deletes the WIP commit at head if any
 func WIPUncommit(repo *git.Repository) error {
-	name, err := currentBranchName(repo)
+	name, err := CurrentBranchName(repo)
 	if err != nil {return err}
 
 	// No WIP branch
@@ -62,7 +62,7 @@ func WIPUncommit(repo *git.Repository) error {
 	err = checkout(name + helper.WipString, repo)
 	if err != nil {return err}
 
-	err = deleteBranch(name + helper.WipString, repo)
+	err = DeleteBranch(name + helper.WipString, repo)
 	if err != nil {return err}
 
 	return nil
