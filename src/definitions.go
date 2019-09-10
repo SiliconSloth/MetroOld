@@ -10,6 +10,7 @@ var allCommands = []commands.Command{
 	commands.Commit,
 	commands.Switch,
 	commands.Line,
+	commands.Patch,
 }
 
 // List of option tags

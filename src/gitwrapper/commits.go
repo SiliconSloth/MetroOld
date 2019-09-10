@@ -1,6 +1,7 @@
 package gitwrapper
 
 import (
+	"errors"
 	git "github.com/libgit2/git2go"
 	"time"
 )
@@ -82,4 +83,33 @@ func getCommit(revision string, repo *git.Repository) (*git.Commit, error) {
 		return nil, err
 	}
 	return commit, nil
+}
+
+// Reverts the last commit WITHOUT leaving a trace of the reverted commit
+// reset - If true, commit is deleted and working directory reset to last commit
+//		   Otherwise working directory is unchanged
+func RevertLastCommit(repo *git.Repository, reset bool) error {
+	// Gets head commit
+	commit, err := getCommit("HEAD", repo)
+	if err != nil {return err}
+
+	// Gets commit before head
+	oldCommit := commit.Parent(0)
+	if oldCommit == nil {return errors.New("head has no parent")}
+
+	// Resets head to the last commit, deleting the current head
+	// If reset is true, also resets working directory
+	checkoutOps := git.CheckoutOpts{}
+	checkoutOps.Strategy = git.CheckoutForce
+	var resetType git.ResetType
+	if reset { resetType = git.ResetHard } else { resetType = git.ResetSoft }
+	err = repo.ResetToCommit(oldCommit, resetType, &checkoutOps)
+	if err != nil {return err}
+
+	return err
+}
+
+
+func GetLastCommit(repo *git.Repository)  (*git.Commit, error) {
+	return getCommit("HEAD", repo)
 }
