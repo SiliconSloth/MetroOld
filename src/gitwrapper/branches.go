@@ -26,7 +26,9 @@ func CreateBranch(name string, repo *git.Repository) (*git.Branch, error) {
 // repo - Repo to checkout from
 func CheckoutBranch(name string, repo *git.Repository) error {
 	err := checkout(name, repo)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	err = moveHead(name, repo)
 	return err
@@ -36,7 +38,9 @@ func CheckoutBranch(name string, repo *git.Repository) error {
 // Files are not changed
 func moveHead(name string, repo *git.Repository) error {
 	branch, err := repo.LookupBranch(name, git.BranchLocal)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	err = repo.SetHead(branch.Reference.Name())
 	return err
@@ -46,9 +50,13 @@ func moveHead(name string, repo *git.Repository) error {
 // Doesn't change current branch tag
 func checkout(name string, repo *git.Repository) error {
 	commit, err := getCommit(name, repo)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 	tree, err := commit.Tree()
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	checkoutOps := git.CheckoutOpts{}
 	checkoutOps.Strategy = git.CheckoutSafe
@@ -57,26 +65,34 @@ func checkout(name string, repo *git.Repository) error {
 	return err
 }
 
-func branchExists(name string, repo *git.Repository) bool {
+func BranchExists(name string, repo *git.Repository) bool {
 	_, err := getCommit(name, repo)
 	return err == nil
 }
 
 func DeleteBranch(name string, repo *git.Repository) error {
 	branch, err := repo.LookupBranch(name, git.BranchLocal)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 	err = branch.Delete()
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func CurrentBranchName(repo *git.Repository) (string, error) {
 	iterator, err := repo.NewBranchIterator(git.BranchLocal)
-	if err != nil {return "", err}
+	if err != nil {
+		return "", err
+	}
 	for branch, _, err := iterator.Next(); err == nil; branch, _, err = iterator.Next() {
 		head, err := branch.IsHead()
-		if err != nil {return "", err}
+		if err != nil {
+			return "", err
+		}
 		if head {
 			return branch.Name()
 		}

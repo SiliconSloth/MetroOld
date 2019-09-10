@@ -21,11 +21,18 @@ func execSwitch(repo *git.Repository, positionals []string, _ map[string]string)
 	if strings.HasSuffix(name, helper.WipString) {
 		return errors.New("Can't switch to wip branch.")
 	}
+	if !gitwrapper.BranchExists(name, repo) {
+		return errors.New("No branch called " + name + ".")
+	}
 
 	err := gitwrapper.WIPCommit(repo)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 	err = gitwrapper.CheckoutBranch(name, repo)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 	err = gitwrapper.WIPUncommit(repo)
 	return err
 }
