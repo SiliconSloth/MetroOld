@@ -98,7 +98,7 @@ func RevertLastCommit(repo *git.Repository, reset bool) error {
 	if oldCommit == nil {return errors.New("head has no parent")}
 
 	// Resets head to the last commit, deleting the current head
-	// If reset, also resets working directory
+	// If reset is true, also resets working directory
 	checkoutOps := git.CheckoutOpts{}
 	checkoutOps.Strategy = git.CheckoutForce
 	var resetType git.ResetType
