@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	git "github.com/libgit2/git2go"
+	"gitwrapper"
+	"strconv"
 )
 
 func execDelete(repo *git.Repository, positionals []string, options map[string]string) error {
@@ -11,7 +13,19 @@ func execDelete(repo *git.Repository, positionals []string, options map[string]s
 		return errors.New("Incorrect Paramater.")
 	}
 	if positionals[0] == "commit" {
-		fmt.Println("Usage: metro delete commit <num>")
+		if len(positionals) > 2 {
+			return errors.New("Unexpected argument: " + positionals[2])
+		}
+		deletes := 1
+		if len(positionals) == 2 {
+			var err error
+			deletes, err = strconv.Atoi(positionals[1])
+			if err != nil { return err }
+		}
+		for ; deletes > 0; deletes-- {
+			err := gitwrapper.RevertLast(repo, false)
+			if err != nil { return err }
+		}
 	}
 	if positionals[0] == "line" {
 		fmt.Println("Usage: metro delete line line-name")
