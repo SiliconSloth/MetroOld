@@ -25,7 +25,20 @@ func execDelete(repo *git.Repository, positionals []string, options map[string]s
 		return gitwrapper.RevertCommit(repo, deletes, false)
 	}
 	if positionals[0] == "line" {
-		fmt.Println("Usage: metro delete line line-name")
+		if len(positionals) < 2 {
+			return errors.New("Line name required.")
+		}
+		if len(positionals) > 2 {
+			return errors.New("Unexpected argument: " + positionals[2])
+		}
+		name := positionals[1]
+		current, err := gitwrapper.CurrentBranchName(repo)
+		if err != nil { return err }
+		if name == current {
+			return errors.New("Can't delete current branch.")
+		}
+
+		return gitwrapper.DeleteBranch(name, repo)
 	}
 	return nil
 }

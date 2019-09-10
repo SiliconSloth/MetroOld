@@ -62,7 +62,7 @@ func branchExists(name string, repo *git.Repository) bool {
 	return err == nil
 }
 
-func deleteBranch(name string, repo *git.Repository) error {
+func DeleteBranch(name string, repo *git.Repository) error {
 	branch, err := repo.LookupBranch(name, git.BranchLocal)
 	if err != nil {return err}
 	err = branch.Delete()
@@ -71,7 +71,7 @@ func deleteBranch(name string, repo *git.Repository) error {
 	return nil
 }
 
-func currentBranchName(repo *git.Repository) (string, error) {
+func CurrentBranchName(repo *git.Repository) (string, error) {
 	iterator, err := repo.NewBranchIterator(git.BranchLocal)
 	if err != nil {return "", err}
 	for branch, _, err := iterator.Next(); err == nil; branch, _, err = iterator.Next() {
