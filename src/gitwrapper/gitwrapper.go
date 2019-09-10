@@ -1,7 +1,6 @@
 package gitwrapper
 
 import (
-	"errors"
 	git "github.com/libgit2/git2go"
 	"helper"
 	"strings"
@@ -67,35 +66,6 @@ func WIPUncommit(repo *git.Repository) error {
 	if err != nil {return err}
 
 	return nil
-}
-
-// Reverts the last commit WITHOUT leaving a trace of the reverted commit
-// reset - If true, the repo is reset back to the last commit
-//		   Otherwise, the commit is reverted without resetting the data
-func RevertLast(repo *git.Repository, reset bool) error {
-	// Gets head commit
-	commit, err := getCommit("HEAD", repo)
-	if err != nil {return err}
-
-	// Gets commit before head
-	oldCommit := commit.Parent(0)
-	if oldCommit == nil {return errors.New("head has no parent")}
-
-	// Resets to the last commit
-	checkoutOps := git.CheckoutOpts{}
-	checkoutOps.Strategy = git.CheckoutForce
-	err = repo.ResetToCommit(oldCommit, git.ResetSoft, &checkoutOps)
-	if err != nil {return err}
-
-	if reset {
-		// Reverts file structure
-		index, err := repo.RevertCommit(commit, oldCommit, 0, nil)
-		if err != nil {return err}
-		err = repo.CheckoutIndex(index, &checkoutOps)
-		if err != nil {return err}
-	}
-
-	return err
 }
 
 // Returns the path specs for the Ignore files

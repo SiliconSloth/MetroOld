@@ -11,6 +11,7 @@ var allCommands = []commands.Command{
 	commands.Switch,
 	commands.Line,
 	commands.Delete,
+	commands.Patch,
 }
 
 // List of option tags
