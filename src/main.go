@@ -40,7 +40,12 @@ func handleCommand() bool {
 					// Pass in all positionals after the sub-command.
 					err := cmd.Execute(repo, positionals[1:], options)
 					if err != nil {
-						fmt.Println(err.Error())
+						switch err.(type) {
+						case *git.GitError:
+							fmt.Println("Internal Error: " + err.Error())
+						default:
+							fmt.Println(err.Error())
+						}
 						cmd.Help(positionals[1:], options)
 					}
 				}
