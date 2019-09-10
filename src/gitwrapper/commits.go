@@ -86,8 +86,8 @@ func getCommit(revision string, repo *git.Repository) (*git.Commit, error) {
 }
 
 // Reverts the last commit WITHOUT leaving a trace of the reverted commit
-// reset - If true, the repo is reset back to the last commit
-//		   Otherwise, the commit is reverted without resetting the data
+// reset - If true, commit is deleted and working directory reset to last commit
+//		   Otherwise working directory is unchanged
 func RevertLastCommit(repo *git.Repository, reset bool) error {
 	// Gets head commit
 	commit, err := getCommit("HEAD", repo)
@@ -97,19 +97,14 @@ func RevertLastCommit(repo *git.Repository, reset bool) error {
 	oldCommit := commit.Parent(0)
 	if oldCommit == nil {return errors.New("head has no parent")}
 
-	// Resets to the last commit
+	// Resets head to the last commit, deleting the current head
+	// If reset, also resets working directory
 	checkoutOps := git.CheckoutOpts{}
 	checkoutOps.Strategy = git.CheckoutForce
-	err = repo.ResetToCommit(oldCommit, git.ResetSoft, &checkoutOps)
+	var resetType git.ResetType
+	if reset { resetType = git.ResetHard } else { resetType = git.ResetSoft }
+	err = repo.ResetToCommit(oldCommit, resetType, &checkoutOps)
 	if err != nil {return err}
-
-	if reset {
-		// Reverts file structure
-		index, err := repo.RevertCommit(commit, oldCommit, 0, nil)
-		if err != nil {return err}
-		err = repo.CheckoutIndex(index, &checkoutOps)
-		if err != nil {return err}
-	}
 
 	return err
 }
