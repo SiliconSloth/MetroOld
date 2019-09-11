@@ -46,12 +46,15 @@ func execDelete(repo *git.Repository, positionals []string, options map[string]s
 func printDeleteHelp(positionals []string, _ map[string]string) {
 	if len(positionals) < 1 || (positionals[0] != "commit" && positionals[0] != "line") {
 		fmt.Println("Usage: metro delete <commit/line>")
+		return
 	}
 	if positionals[0] == "commit" {
 		fmt.Println("Usage: metro delete commit <num>")
+		return
 	}
 	if positionals[0] == "line" {
 		fmt.Println("Usage: metro delete line line-name")
+		return
 	}
 }
 

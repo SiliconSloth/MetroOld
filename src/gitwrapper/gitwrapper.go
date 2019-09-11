@@ -19,3 +19,13 @@ func pathSpecs(repo *git.Repository) []string {
 	ignore = append(ignore, strings.Split(helper.GetFileContents(repo.Workdir()+"/.metroignore"), "\n")...)
 	return ignore
 }
+
+func SetCreds(repo *git.Repository, username string, email string) error {
+	config, err := repo.Config()
+	if err != nil { return err }
+	err = config.SetString("user.name", username)
+	if err != nil { return err }
+	err = config.SetString("user.email", email)
+	if err != nil { return err }
+	return nil
+}
