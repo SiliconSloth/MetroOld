@@ -97,5 +97,5 @@ func CurrentBranchName(repo *git.Repository) (string, error) {
 			return branch.Name()
 		}
 	}
-	return "", errors.New("Could not find current branch.")
+	return "", errors.New("Could not find current line.")
 }

@@ -19,10 +19,10 @@ func execSwitch(repo *git.Repository, positionals []string, _ map[string]string)
 	name := positionals[0]
 
 	if strings.HasSuffix(name, helper.WipString) {
-		return errors.New("Can't switch to wip branch.")
+		return errors.New("Can't switch to wip line.")
 	}
 	if !gitwrapper.BranchExists(name, repo) {
-		return errors.New("No branch called " + name + ".")
+		return errors.New("No line called " + name + ".")
 	}
 
 	err := gitwrapper.WIPCommit(repo)
@@ -41,4 +41,4 @@ func printSwitchHelp(_ []string, _ map[string]string) {
 	fmt.Println("Usage: metro switch <line>")
 }
 
-var Switch = Command{"switch", "Switch to a different line or branch", execSwitch, printSwitchHelp}
+var Switch = Command{"switch", "Switch to a different line", execSwitch, printSwitchHelp}
