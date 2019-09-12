@@ -99,3 +99,62 @@ func CurrentBranchName(repo *git.Repository) (string, error) {
 	}
 	return "", errors.New("Could not find current branch.")
 }
+
+// Merge the head of the named branch into the current branch head.
+func Merge(name string, repo *git.Repository) (bool, error) {
+	otherHead, err := getCommit(name, repo)
+	if err != nil {
+		return false, err
+	}
+	annOther, err := repo.LookupAnnotatedCommit(otherHead.Id())
+	if err != nil {
+		return false, err
+	}
+	sources := []*git.AnnotatedCommit{annOther}
+
+	analysis, _, err := repo.MergeAnalysis(sources)
+	if err != nil {
+		return false, err
+	}
+	if analysis&git.MergeAnalysisNone != 0 || analysis&git.MergeAnalysisUpToDate != 0 {
+		return false, errors.New("Nothing to absorb")
+	}
+	// TODO: This probably doesn't support fast-forward
+	if analysis&git.MergeAnalysisNormal == 0 {
+		return false, errors.New("Non-normal absorb")
+	}
+
+	mergeOptions, err := git.DefaultMergeOptions()
+	if err != nil {
+		return false, err
+	}
+	checkoutOptions := git.CheckoutOpts{
+		Strategy: git.CheckoutForce | git.CheckoutAllowConflicts,
+	}
+
+	err = repo.Merge(sources, &mergeOptions, &checkoutOptions)
+	if err != nil {
+		return false, err
+	}
+
+	index, err := repo.Index()
+	if err != nil {
+		return false, err
+	}
+
+	if index.HasConflicts() {
+		// Make Git let us commit.
+		index.CleanupConflicts()
+		err = Commit(repo, "Began absorbing "+name+" with conflicts", "HEAD^{commit}", name+"^{commit}")
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	} else {
+		err = Commit(repo, "Absorbed "+name, "HEAD^{commit}", name+"^{commit}")
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+}
