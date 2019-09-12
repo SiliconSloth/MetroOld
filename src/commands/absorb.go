@@ -5,6 +5,8 @@ import (
 	"fmt"
 	git "github.com/libgit2/git2go"
 	"gitwrapper"
+	"helper"
+	"strings"
 )
 
 func execAbsorb(repo *git.Repository, positionals []string, options map[string]string) error {
@@ -16,12 +18,20 @@ func execAbsorb(repo *git.Repository, positionals []string, options map[string]s
 	}
 	name := positionals[0]
 
+	if strings.HasSuffix(name, helper.WipString) {
+		return errors.New("Can't absorb wip branch.")
+	}
+
 	conflicts, err := gitwrapper.Merge(name, repo)
 	if err != nil {
 		return err
 	}
 	if conflicts {
 		fmt.Println("Conflicts occurred, please resolve.")
+	} else {
+		current, err := gitwrapper.CurrentBranchName(repo)
+		if err != nil { return err }
+		fmt.Println(name, "successfully absorbed into", current + ".")
 	}
 
 	return nil
