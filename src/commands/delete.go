@@ -20,7 +20,9 @@ func execDelete(repo *git.Repository, positionals []string, options map[string]s
 		if len(positionals) == 2 {
 			var err error
 			deletes, err = strconv.Atoi(positionals[1])
-			if err != nil { return err }
+			if err != nil {
+				return err
+			}
 		}
 		return gitwrapper.RevertCommit(repo, deletes, false)
 	}
@@ -33,7 +35,9 @@ func execDelete(repo *git.Repository, positionals []string, options map[string]s
 		}
 		name := positionals[1]
 		current, err := gitwrapper.CurrentBranchName(repo)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		if name == current {
 			return errors.New("Can't delete current branch.")
 		}
@@ -51,7 +55,7 @@ func printDeleteHelp(positionals []string, _ map[string]string) {
 		fmt.Println("Usage: metro delete commit <num>")
 	}
 	if positionals[0] == "line" {
-		fmt.Println("Usage: metro delete line line-name")
+		fmt.Println("Usage: metro delete line <line-name>")
 	}
 }
 

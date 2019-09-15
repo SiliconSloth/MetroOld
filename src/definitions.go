@@ -12,11 +12,10 @@ var allCommands = []commands.Command{
 	commands.Line,
 	commands.Delete,
 	commands.Patch,
+	commands.Absorb,
 }
 
 // List of option tags
 var allOptions = []commands.Option{
 	{"help", "h", false},
-	{"force", "f", false},
-	{"timeout", "t", true},
 }
