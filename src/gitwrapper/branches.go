@@ -23,9 +23,9 @@ func CreateBranch(name string, repo *git.Repository) (*git.Branch, error) {
 
 // Checks out the given branch by name
 // name - Plain Text branch name (e.g. 'master')
-// repo - Repo to checkout from
+// repo - Repo to Checkout from
 func CheckoutBranch(name string, repo *git.Repository) error {
-	err := checkout(name, repo)
+	err := Checkout(name, repo)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func moveHead(name string, repo *git.Repository) error {
 
 // Checks out the given branch without moving head
 // Doesn't change current branch tag
-func checkout(name string, repo *git.Repository) error {
+func Checkout(name string, repo *git.Repository) error {
 	commit, err := getCommit(name, repo)
 	if err != nil {
 		return err

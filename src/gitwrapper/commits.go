@@ -205,7 +205,7 @@ func WIPUncommit(repo *git.Repository) error {
 	if !BranchExists(name+helper.WipString, repo) {
 		return nil
 	}
-	err = checkout(name+helper.WipString, repo)
+	err = Checkout(name+helper.WipString, repo)
 	if err != nil {
 		return err
 	}

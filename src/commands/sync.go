@@ -77,24 +77,43 @@ func execSync(repo *git.Repository, positionals []string, options map[string]str
 
 func downsync(repo *git.Repository, remote *git.Remote) error {
 	callbacks := gitwrapper.CreateCallbacks()
-	fetchOps := git.FetchOptions{ RemoteCallbacks: callbacks }
+	fetchOps := git.FetchOptions{RemoteCallbacks: callbacks}
 	err := remote.Fetch(nil, &fetchOps, "pull")
+	if err != nil { return err }
+
+	err = gitwrapper.Checkout("origin/master", repo)
 	if err != nil { return err }
 
 	branch, err := gitwrapper.CurrentBranchName(repo)
 	if err != nil { return err }
-	conflicts, err := gitwrapper.Merge("origin/" + branch, repo)
-	if err != nil {
-		if err.Error() == "Nothing to absorb" {
-			return errors.New("You're already in Sync.")
-		} else { return err }
-	}
 
-	if !conflicts {
-		fmt.Println("Successfully Downsynched.")
-	} else {
-		fmt.Println("Conflicts Found: Fix, Commit and Sync again.")
-	}
+	ref, err := repo.LookupBranch(branch, git.BranchLocal)
+	if err != nil { return err }
+
+	refOrigin, err := repo.LookupBranch("origin/" + branch, git.BranchRemote)
+	if err != nil { return err }
+
+	_, err = ref.SetTarget(refOrigin.Target(), "message")
+	if err != nil { return err }
+
+
+	err = gitwrapper.CheckoutBranch("master", repo)
+	if err != nil { return err }
+
+	//conflicts, err := gitwrapper.Merge("origin/"+branch, repo)
+	//if err != nil {
+	//	if err.Error() == "Nothing to absorb" {
+	//		return errors.New("You're already in Sync.")
+	//	} else {
+	//		return err
+	//	}
+	//}
+	//
+	//if !conflicts {
+	//	fmt.Println("Successfully Downsynched.")
+	//} else {
+	//	fmt.Println("Conflicts Found: Fix, Commit and Sync again.")
+	//}
 
 	return nil
 }
