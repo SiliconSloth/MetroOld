@@ -217,3 +217,35 @@ func WIPUncommit(repo *git.Repository) error {
 
 	return nil
 }
+
+func IsUnsavedChanges(repo *git.Repository) (bool, error) {
+	statusOps := git.StatusOptions{
+		Show:     git.StatusShowIndexAndWorkdir,
+		Flags:    git.StatusOptIncludeUntracked,
+		Pathspec: pathSpecs(repo),
+	}
+	status, err := repo.StatusList(&statusOps)
+	if err != nil {
+		return false, err
+	}
+	count, err := status.EntryCount()
+	if err != nil {
+		return false, err
+	}
+
+	// No Files
+	if count == 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
+// Deletes all changes
+func ResetHead(repo *git.Repository) error {
+	head, err := GetLastCommit(repo)
+	if err != nil { return err }
+	err = repo.ResetToCommit(head, git.ResetHard, nil)
+	if err != nil { return err }
+
+	return nil
+}

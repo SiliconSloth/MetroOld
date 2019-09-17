@@ -56,7 +56,8 @@ func execSync(repo *git.Repository, positionals []string, options map[string]str
 
 	if maxArgs == 2 {
 		if positionals[0] == "down" {
-			err := downsync(repo, remote)
+			_, ok := options["force"]
+			err := downsync(repo, remote, ok)
 			if err != nil { return err }
 		} else
 		if positionals[0] == "up" {
@@ -66,7 +67,8 @@ func execSync(repo *git.Repository, positionals []string, options map[string]str
 			return errors.New("Unexpected Error: Expected Positional.")
 		}
 	} else {
-		err := downsync(repo, remote)
+		_, ok := options["force"]
+		err := downsync(repo, remote, ok)
 		if err != nil { return err }
 		err = upsync(repo, positionals)
 		if err != nil { return err }
@@ -75,45 +77,77 @@ func execSync(repo *git.Repository, positionals []string, options map[string]str
 	return nil
 }
 
-func downsync(repo *git.Repository, remote *git.Remote) error {
-	callbacks := gitwrapper.CreateCallbacks()
-	fetchOps := git.FetchOptions{RemoteCallbacks: callbacks}
-	err := remote.Fetch(nil, &fetchOps, "pull")
-	if err != nil { return err }
-
-	err = gitwrapper.Checkout("origin/master", repo)
-	if err != nil { return err }
-
+func downsync(repo *git.Repository, remote *git.Remote, force bool) error {
 	branch, err := gitwrapper.CurrentBranchName(repo)
 	if err != nil { return err }
 
-	ref, err := repo.LookupBranch(branch, git.BranchLocal)
+	callbacks := gitwrapper.CreateCallbacks()
+	fetchOps := git.FetchOptions{RemoteCallbacks: callbacks}
+	err = remote.Fetch(nil, &fetchOps, "pull")
 	if err != nil { return err }
 
-	refOrigin, err := repo.LookupBranch("origin/" + branch, git.BranchRemote)
-	if err != nil { return err }
+	analysis, err := gitwrapper.MergeAnalysis("origin/master", repo)
+	if force && analysis&git.MergeAnalysisUpToDate == 0 {
+		err = gitwrapper.ResetHead(repo)
+		if err != nil { return err }
+	} else if analysis&git.MergeAnalysisUpToDate == 0 {
+		areChanged, err := gitwrapper.IsUnsavedChanges(repo)
+		if err != nil {
+			return err
+		}
+		if areChanged {
+			fmt.Println("Cannot Sync Down with unsaved changes.")
+			return nil
+		}
+	}
 
-	_, err = ref.SetTarget(refOrigin.Target(), "message")
-	if err != nil { return err }
+	if analysis&git.MergeAnalysisFastForward != 0 {
+		err = gitwrapper.FastForward("origin/" + branch, repo)
+		if err != nil { return err }
+	} else if analysis&git.MergeAnalysisUpToDate == 0 {
+		_, err = gitwrapper.CreateBranch(branch + "-local", repo)
+		if err != nil { return err }
+		err = gitwrapper.FastForward("origin/" + branch, repo)
+		if err != nil { return err }
 
+		var in string
+		fmt.Println("Conflict Found:")
+		fmt.Printf("[0] Absorb local %s line into remote %s line\n", branch, branch)
+		fmt.Printf("[1] Move local changes to new line %s-local\n", branch)
+		_, err = fmt.Scan(&in)
+		if err != nil { return err }
+		switch in {
+		case "0":
+		case "1":
+			fmt.Printf("Successfully moved local changes into %s-local\n", branch)
+			return nil
+		default:
+			fmt.Printf("Invalid choice: Moved local changes into %s-local\n", branch)
+			return nil
+		}
 
-	err = gitwrapper.CheckoutBranch("master", repo)
-	if err != nil { return err }
+		conflicts, err := gitwrapper.Merge(branch + "-local", repo)
+		if err != nil {
+			if err.Error() == "Nothing to absorb" {
+				return errors.New("You're already in Sync.")
+			} else {
+				return err
+			}
+		}
 
-	//conflicts, err := gitwrapper.Merge("origin/"+branch, repo)
-	//if err != nil {
-	//	if err.Error() == "Nothing to absorb" {
-	//		return errors.New("You're already in Sync.")
-	//	} else {
-	//		return err
-	//	}
-	//}
-	//
-	//if !conflicts {
-	//	fmt.Println("Successfully Downsynched.")
-	//} else {
-	//	fmt.Println("Conflicts Found: Fix, Commit and Sync again.")
-	//}
+		err = gitwrapper.DeleteBranch(branch + "-local", repo)
+		if err != nil { return err }
+
+		if !conflicts {
+			err = gitwrapper.Commit(repo, "Completed Absorb.")
+			if err != nil { return err }
+			fmt.Println("Successfully absorbed changes")
+		} else {
+			fmt.Println("Conflicts Found: Fix, Commit and Sync again.")
+		}
+	} else {
+		fmt.Println("You're up to date.")
+	}
 
 	return nil
 }

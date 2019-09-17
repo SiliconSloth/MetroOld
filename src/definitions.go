@@ -18,4 +18,5 @@ var allCommands = []commands.Command{
 // List of option tags
 var allOptions = []commands.Option{
 	{"help", "h", false},
+	{"force", "f", false},
 }

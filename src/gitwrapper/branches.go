@@ -158,3 +158,45 @@ func Merge(name string, repo *git.Repository) (bool, error) {
 		return false, nil
 	}
 }
+
+// Analyses against the provided branch, returning an analysis result
+func MergeAnalysis(name string, repo *git.Repository) (git.MergeAnalysis, error) {
+	otherHead, err := getCommit(name, repo)
+	if err != nil {
+		return 0, err
+	}
+	annOther, err := repo.LookupAnnotatedCommit(otherHead.Id())
+	if err != nil {
+		return 0, err
+	}
+	sources := []*git.AnnotatedCommit{annOther}
+
+	analysis, _, err := repo.MergeAnalysis(sources)
+
+	return analysis, nil
+}
+
+// Replaces all current work with new branch, resetting the commit
+// Does NOT check if safe - do that first
+func FastForward(name string, repo *git.Repository) error {
+	// Replaces all current work with origin
+	branch, err := CurrentBranchName(repo)
+	if err != nil { return err }
+
+	err = Checkout(name, repo)
+	if err != nil { return err }
+
+	ref, err := repo.LookupBranch(branch, git.BranchLocal)
+	if err != nil { return err }
+
+	refOrigin, err := repo.LookupBranch("origin/"+branch, git.BranchRemote)
+	if err != nil { return err }
+
+	_, err = ref.SetTarget(refOrigin.Target(), "message")
+	if err != nil { return err }
+
+	err = CheckoutBranch(branch, repo)
+	if err != nil { return err }
+
+	return nil
+}
