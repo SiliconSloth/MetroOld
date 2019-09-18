@@ -144,11 +144,11 @@ func Merge(name string, repo *git.Repository) (bool, error) {
 
 	if index.HasConflicts() {
 		// Make Git let us commit.
-		index.CleanupConflicts()
-		err = Commit(repo, "Began absorbing "+name+" with conflicts", "HEAD^{commit}", name+"^{commit}")
-		if err != nil {
-			return false, err
-		}
+		//index.CleanupConflicts()
+		//err = Commit(repo, "Began absorbing "+name+" with conflicts\n\n#CONFLICTS", "HEAD^{commit}", name+"^{commit}")
+		//if err != nil {
+		//	return false, err
+		//}
 		return true, nil
 	} else {
 		err = Commit(repo, "Absorbed "+name, "HEAD^{commit}", name+"^{commit}")

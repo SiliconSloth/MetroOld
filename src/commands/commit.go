@@ -16,7 +16,12 @@ func execCommit(repo *git.Repository, positionals []string, _ map[string]string)
 	}
 	message := positionals[0]
 
-	err := gitwrapper.Commit(repo, message, "HEAD^{commit}")
+	err := gitwrapper.AssertConflicts(repo)
+	if err != nil {
+		return err
+	}
+
+	err = gitwrapper.Commit(repo, message, "HEAD^{commit}")
 	if err != nil {
 		return err
 	}
