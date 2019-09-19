@@ -25,7 +25,7 @@ func CreateBranch(name string, repo *git.Repository) (*git.Branch, error) {
 // name - Plain Text branch name (e.g. 'master')
 // repo - Repo to checkout from
 func CheckoutBranch(name string, repo *git.Repository) error {
-	err := checkout(name, repo)
+	err := checkout(name, true, repo)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func moveHead(name string, repo *git.Repository) error {
 
 // Checks out the given branch without moving head
 // Doesn't change current branch tag
-func checkout(name string, repo *git.Repository) error {
+func checkout(name string, doIndex bool, repo *git.Repository) error {
 	commit, err := getCommit(name, repo)
 	if err != nil {
 		return err
@@ -59,7 +59,11 @@ func checkout(name string, repo *git.Repository) error {
 	}
 
 	checkoutOps := git.CheckoutOpts{}
-	checkoutOps.Strategy = git.CheckoutSafe
+	if doIndex {
+		checkoutOps.Strategy = git.CheckoutSafe
+	} else {
+		checkoutOps.Strategy = git.CheckoutDontUpdateIndex
+	}
 	err = repo.CheckoutTree(tree, &checkoutOps)
 
 	return err
@@ -151,6 +155,10 @@ func Merge(name string, repo *git.Repository) (bool, error) {
 		//}
 		return true, nil
 	} else {
+		err = repo.StateCleanup()
+		if err != nil {
+			return false, err
+		}
 		err = Commit(repo, "Absorbed "+name, "HEAD^{commit}", name+"^{commit}")
 		if err != nil {
 			return false, err

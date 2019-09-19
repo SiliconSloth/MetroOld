@@ -22,7 +22,7 @@ func execAbsorb(repo *git.Repository, positionals []string, options map[string]s
 		return errors.New("Can't absorb WIP branch.")
 	}
 
-	err := gitwrapper.AssertConflicts(repo)
+	err := gitwrapper.AssertMerging(repo)
 	if err != nil {
 		return err
 	}

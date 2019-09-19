@@ -23,7 +23,7 @@ func execPatch(repo *git.Repository, positionals []string, options map[string]st
 		return errors.New("Unexpected argument: " + positionals[1])
 	}
 
-	err = gitwrapper.AssertConflicts(repo)
+	err = gitwrapper.AssertMerging(repo)
 	if err != nil {
 		return err
 	}

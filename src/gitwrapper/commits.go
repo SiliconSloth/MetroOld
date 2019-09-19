@@ -185,7 +185,17 @@ func WIPCommit(repo *git.Repository) error {
 	if err != nil {
 		return err
 	}
-	err = Commit(repo, "WIP", "HEAD^{commit}")
+
+	merging := MergeOngoing(repo)
+	if merging {
+		err = Commit(repo, "WIP", "HEAD^{commit}", "MERGE_HEAD^{commit}")
+		if err != nil {
+			return err
+		}
+		err = repo.StateCleanup()
+	} else {
+		err = Commit(repo, "WIP", "HEAD^{commit}")
+	}
 	if err != nil {
 		return err
 	}
@@ -204,7 +214,23 @@ func WIPUncommit(repo *git.Repository) error {
 	if !BranchExists(name+helper.WipString, repo) {
 		return nil
 	}
-	err = checkout(name+helper.WipString, repo)
+
+	commit, err := getCommit(name+helper.WipString, repo)
+	if err != nil {
+		return err
+	}
+	if commit.ParentCount() > 1 {
+		mergeHead := commit.Parent(1).Id().String()
+		conflicts, err := Merge(mergeHead, repo)
+		if err != nil {
+			return err
+		}
+		if !conflicts {
+			return errors.New("WIP contained merge with no conflicts.")
+		}
+	}
+
+	err = checkout(name+helper.WipString, false, repo)
 	if err != nil {
 		return err
 	}
