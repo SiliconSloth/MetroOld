@@ -13,10 +13,16 @@ func execResolve(repo *git.Repository, positionals []string, options map[string]
 		return errors.New("You can only resolve conflicts while absorbing.")
 	}
 
-	err := repo.StateCleanup()
+	err := gitwrapper.MergeCommit(repo)
 	if err != nil {
 		return err
 	}
+
+	current, err := gitwrapper.CurrentBranchName(repo)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Successfully absorbed into " + current + ".")
 
 	return nil
 }

@@ -21,7 +21,7 @@ func execSwitch(repo *git.Repository, positionals []string, _ map[string]string)
 	if strings.HasSuffix(name, helper.WipString) {
 		return errors.New("Can't switch to wip line.")
 	}
-	if !gitwrapper.BranchExists(name, repo) {
+	if !gitwrapper.CommitExists(name, repo) {
 		return errors.New("No line called " + name + ".")
 	}
 
@@ -34,6 +34,8 @@ func execSwitch(repo *git.Repository, positionals []string, _ map[string]string)
 		return err
 	}
 	err = gitwrapper.WIPUncommit(repo)
+
+	fmt.Println("Switched to branch " + name + ".")
 	return err
 }
 
