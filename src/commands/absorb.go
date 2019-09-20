@@ -60,4 +60,4 @@ func printAbsorbHelp(_ []string, _ map[string]string) {
 	fmt.Println("Usage: metro absorb <other-branch>")
 }
 
-var Absorb = Command{"absorb", "StartMerge the changes in another branch into this one", execAbsorb, printAbsorbHelp}
+var Absorb = Command{"absorb", "Merge the changes in another branch into this one", execAbsorb, printAbsorbHelp}
