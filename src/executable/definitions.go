@@ -1,6 +1,6 @@
 package main
 
-import "commands"
+import "executable/commands"
 
 // List of all commands available
 var allCommands = []commands.Command{

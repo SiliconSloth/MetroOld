@@ -1,7 +1,7 @@
 package main
 
 import (
-	"commands"
+	"executable/commands"
 	"fmt"
 	git "github.com/libgit2/git2go"
 	"os"
