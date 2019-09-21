@@ -216,7 +216,13 @@ func WIPCommit(repo *git.Repository) error {
 
 	merging := MergeOngoing(repo)
 	if merging {
-		err = Commit(repo, "WIP", "HEAD^{commit}", "MERGE_HEAD^{commit}")
+		message, err := getMergeMessage(repo)
+		if err != nil {
+			return err
+		}
+
+		// Store the merge message in the second line (and beyond) of the WIP commit message.
+		err = Commit(repo, "WIP\n"+message, "HEAD^{commit}", "MERGE_HEAD^{commit}")
 		if err != nil {
 			return err
 		}
@@ -262,6 +268,22 @@ func WIPUncommit(repo *git.Repository) error {
 		if err != nil {
 			return err
 		}
+
+		// Reload the merge message from before, stored in the second line (and beyond)
+		// of the WIP commit message.
+		commitMessage := wipCommit.Message()
+		newlineIndex := strings.Index(commitMessage, "\n")
+		// If the commit message only has one line (only happens if it has been tampered with)
+		// just leave the message as the default one created when restarting the merge.
+		// Otherwise restore the merge message from the commit message.
+		if newlineIndex >= 0 {
+			mergeMessage := commitMessage[newlineIndex+1:]
+			err = setMergeMessage(mergeMessage, repo)
+			if err != nil {
+				return err
+			}
+		}
+
 		// Remove the conflicts from the index temporarily so we can checkout.
 		// They will be restored after so that the index and working dir
 		// match their state when the WIP commit was created.
