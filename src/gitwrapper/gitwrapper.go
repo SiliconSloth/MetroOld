@@ -12,13 +12,15 @@ func Init(directory string) (*git.Repository, error) {
 	return git.InitRepository(directory+"/.git", false)
 }
 
+// Raises an error if the repo is currently in merging state.
 func AssertMerging(repo *git.Repository) error {
 	if MergeOngoing(repo) {
-		return errors.New("Branch has conflicts, please finish reosolving them.")
+		return errors.New("Branch has conflicts, please finish resolving them.\nRun metro resolve when you are done.")
 	}
 	return nil
 }
 
+// Returns true if the repo is currently in merging state.
 func MergeOngoing(repo *git.Repository) bool {
 	_, err := repo.RevparseSingle("MERGE_HEAD")
 	return err == nil
