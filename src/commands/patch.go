@@ -10,7 +10,9 @@ import (
 func execPatch(repo *git.Repository, positionals []string, options map[string]string) error {
 	// Uses existing message as default
 	commit, err := gitwrapper.GetLastCommit(repo)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 	message := commit.Message()
 
 	if len(positionals) == 1 {
@@ -21,10 +23,19 @@ func execPatch(repo *git.Repository, positionals []string, options map[string]st
 		return errors.New("Unexpected argument: " + positionals[1])
 	}
 
+	err = gitwrapper.AssertMerging(repo)
+	if err != nil {
+		return err
+	}
+
 	err = gitwrapper.RevertLastCommit(repo, false)
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 	err = gitwrapper.Commit(repo, message, "HEAD^{commit}")
-	if err != nil {return err}
+	if err != nil {
+		return err
+	}
 
 	fmt.Println("Patched Commit.")
 	return nil

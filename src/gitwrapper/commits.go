@@ -140,6 +140,34 @@ func GetLastCommit(repo *git.Repository) (*git.Commit, error) {
 	return getCommit("HEAD", repo)
 }
 
+// Checks out the given commit without moving head,
+// such that the working directory will match the commit contents.
+// Doesn't change current branch ref.
+func checkout(name string, repo *git.Repository) error {
+	commit, err := getCommit(name, repo)
+	if err != nil {
+		return err
+	}
+	tree, err := commit.Tree()
+	if err != nil {
+		return err
+	}
+
+	checkoutOps := git.CheckoutOpts{}
+	checkoutOps.Strategy = git.CheckoutForce
+	err = repo.CheckoutTree(tree, &checkoutOps)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func CommitExists(name string, repo *git.Repository) bool {
+	_, err := getCommit(name, repo)
+	return err == nil
+}
+
 // If anything is added, creates a new branch with a commit called WIP
 func WIPCommit(repo *git.Repository) error {
 	statusOps := git.StatusOptions{
@@ -170,7 +198,7 @@ func WIPCommit(repo *git.Repository) error {
 	}
 
 	// If WIP already exists, delete
-	if BranchExists(name+helper.WipString, repo) {
+	if CommitExists(name+helper.WipString, repo) {
 		err = DeleteBranch(name+helper.WipString, repo)
 		if err != nil {
 			return err
@@ -185,7 +213,23 @@ func WIPCommit(repo *git.Repository) error {
 	if err != nil {
 		return err
 	}
-	err = Commit(repo, "WIP", "HEAD^{commit}")
+
+	merging := MergeOngoing(repo)
+	if merging {
+		message, err := getMergeMessage(repo)
+		if err != nil {
+			return err
+		}
+
+		// Store the merge message in the second line (and beyond) of the WIP commit message.
+		err = Commit(repo, "WIP\n"+message, "HEAD^{commit}", "MERGE_HEAD^{commit}")
+		if err != nil {
+			return err
+		}
+		err = repo.StateCleanup()
+	} else {
+		err = Commit(repo, "WIP", "HEAD^{commit}")
+	}
 	if err != nil {
 		return err
 	}
@@ -193,7 +237,8 @@ func WIPCommit(repo *git.Repository) error {
 	return nil
 }
 
-// Deletes the WIP commit at head if any
+// Deletes the WIP commit at head if any, restoring the contents to the working directory
+// and resuming a merge if one was ongoing.
 func WIPUncommit(repo *git.Repository) error {
 	name, err := CurrentBranchName(repo)
 	if err != nil {
@@ -201,15 +246,73 @@ func WIPUncommit(repo *git.Repository) error {
 	}
 
 	// No WIP branch
-	if !BranchExists(name+helper.WipString, repo) {
+	if !CommitExists(name+helper.WipString, repo) {
 		return nil
 	}
+
+	wipCommit, err := getCommit(name+helper.WipString, repo)
+	if err != nil {
+		return err
+	}
+
+	index, err := repo.Index()
+	if err != nil {
+		return err
+	}
+
+	var conflicts []git.IndexConflict
+	// If the WIP commit has two parents a merge was ongoing.
+	if wipCommit.ParentCount() > 1 {
+		mergeHead := wipCommit.Parent(1).Id().String()
+		err := StartMerge(mergeHead, repo)
+		if err != nil {
+			return err
+		}
+
+		// Reload the merge message from before, stored in the second line (and beyond)
+		// of the WIP commit message.
+		commitMessage := wipCommit.Message()
+		newlineIndex := strings.Index(commitMessage, "\n")
+		// If the commit message only has one line (only happens if it has been tampered with)
+		// just leave the message as the default one created when restarting the merge.
+		// Otherwise restore the merge message from the commit message.
+		if newlineIndex >= 0 {
+			mergeMessage := commitMessage[newlineIndex+1:]
+			err = setMergeMessage(mergeMessage, repo)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Remove the conflicts from the index temporarily so we can checkout.
+		// They will be restored after so that the index and working dir
+		// match their state when the WIP commit was created.
+		conflicts, err = getConflicts(index)
+		if err != nil {
+			return err
+		}
+		index.CleanupConflicts()
+	}
+
+	// Restore the contents of the WIP commit to the working directory.
 	err = checkout(name+helper.WipString, repo)
 	if err != nil {
 		return err
 	}
 
 	err = DeleteBranch(name+helper.WipString, repo)
+	if err != nil {
+		return err
+	}
+
+	// If we are mid-merge, restore the conflicts from the merge.
+	for _, conflict := range conflicts {
+		err = index.AddConflict(conflict.Ancestor, conflict.Our, conflict.Their)
+		if err != nil {
+			return err
+		}
+	}
+	err = index.Write()
 	if err != nil {
 		return err
 	}

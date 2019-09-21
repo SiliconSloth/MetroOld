@@ -13,6 +13,7 @@ var allCommands = []commands.Command{
 	commands.Delete,
 	commands.Patch,
 	commands.Absorb,
+	commands.Resolve,
 }
 
 // List of option tags

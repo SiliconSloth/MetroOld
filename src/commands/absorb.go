@@ -19,19 +19,38 @@ func execAbsorb(repo *git.Repository, positionals []string, options map[string]s
 	name := positionals[0]
 
 	if strings.HasSuffix(name, helper.WipString) {
-		return errors.New("Can't absorb wip branch.")
+		return errors.New("Can't absorb WIP branch.")
 	}
 
-	conflicts, err := gitwrapper.Merge(name, repo)
+	err := gitwrapper.AssertMerging(repo)
 	if err != nil {
 		return err
 	}
-	if conflicts {
+
+	err = gitwrapper.StartMerge(name, repo)
+	if err != nil {
+		return err
+	}
+
+	index, err := repo.Index()
+	if err != nil {
+		return err
+	}
+
+	if index.HasConflicts() {
 		fmt.Println("Conflicts occurred, please resolve.")
 	} else {
+		// If no conflicts occurred make the merge commit right away.
+		err = gitwrapper.MergeCommit(repo)
+		if err != nil {
+			return err
+		}
+
 		current, err := gitwrapper.CurrentBranchName(repo)
-		if err != nil { return err }
-		fmt.Println(name, "successfully absorbed into", current + ".")
+		if err != nil {
+			return err
+		}
+		fmt.Println("Successfully absorbed " + name + " into " + current + ".")
 	}
 
 	return nil
