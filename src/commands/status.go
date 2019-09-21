@@ -5,6 +5,7 @@ import (
 	"github.com/libgit2/git2go"
 )
 
+// TODO: Make this print current branch
 func execStatus(_ *git.Repository, _ []string, _ map[string]string) error {
 	return nil
 }

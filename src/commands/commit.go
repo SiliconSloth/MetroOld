@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	git "github.com/libgit2/git2go"
-	"gitwrapper"
+	"metro"
 )
 
 func execCommit(repo *git.Repository, positionals []string, _ map[string]string) error {
@@ -16,12 +16,12 @@ func execCommit(repo *git.Repository, positionals []string, _ map[string]string)
 	}
 	message := positionals[0]
 
-	err := gitwrapper.AssertMerging(repo)
+	err := metro.AssertMerging(repo)
 	if err != nil {
 		return err
 	}
 
-	err = gitwrapper.Commit(repo, message, "HEAD^{commit}")
+	err = metro.Commit(repo, message, "HEAD^{commit}")
 	if err != nil {
 		return err
 	}

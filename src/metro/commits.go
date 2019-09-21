@@ -1,9 +1,8 @@
-package gitwrapper
+package metro
 
 import (
 	"errors"
 	git "github.com/libgit2/git2go"
-	"helper"
 	"strings"
 	"time"
 )
@@ -27,8 +26,7 @@ func Commit(repo *git.Repository, message string, parentRevs ...string) error {
 		return err
 	}
 
-	// Stage all the files in the repo directory (excluding those in .gitignore) for the commit.
-	err = index.AddAll(pathSpecs(repo), git.IndexAddDisablePathspecMatch, nil)
+	err = index.AddAll(nil, git.IndexAddDisablePathspecMatch, nil)
 	if err != nil {
 		return err
 	}
@@ -53,7 +51,7 @@ func Commit(repo *git.Repository, message string, parentRevs ...string) error {
 	// Retrieve the commit objects associated with the given parent revisions.
 	var parentCommits []*git.Commit
 	for _, parentRev := range parentRevs {
-		parentCommit, err := getCommit(parentRev, repo)
+		parentCommit, err := GetCommit(parentRev, repo)
 		if err != nil {
 			return err
 		}
@@ -75,7 +73,7 @@ func Commit(repo *git.Repository, message string, parentRevs ...string) error {
 // repo - Repo to find the commit in
 //
 // Returns the commit
-func getCommit(revision string, repo *git.Repository) (*git.Commit, error) {
+func GetCommit(revision string, repo *git.Repository) (*git.Commit, error) {
 	obj, err := repo.RevparseSingle(revision)
 	if err != nil {
 		return nil, err
@@ -87,24 +85,43 @@ func getCommit(revision string, repo *git.Repository) (*git.Commit, error) {
 	return commit, nil
 }
 
+// TODO: Make this work with commits with more than one parent
+func Patch(repo *git.Repository, message string) error {
+	err := AssertMerging(repo)
+	if err != nil {
+		return err
+	}
+
+	err = DeleteLastCommit(repo, false)
+	if err != nil {
+		return err
+	}
+
+	err = Commit(repo, message, "HEAD^{commit}")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Reverts the last commit WITHOUT leaving a trace of the reverted commit
 // reset - If true, commit is deleted and working directory reset to last commit
 //		   Otherwise working directory is unchanged
-func RevertLastCommit(repo *git.Repository, reset bool) error {
-	return RevertCommit(repo, 1, reset)
+func DeleteLastCommit(repo *git.Repository, reset bool) error {
+	return DeleteCommits(repo, 1, reset)
 }
 
 // Reverts the last commit WITHOUT leaving a trace of the reverted commit
 // commitsBack - How many commits back to revert
 // reset - If true, commit is deleted and working directory reset to last commit
 //		   Otherwise working directory is unchanged
-func RevertCommit(repo *git.Repository, commitsBack int, reset bool) error {
+func DeleteCommits(repo *git.Repository, commitsBack int, reset bool) error {
 	if commitsBack < 1 {
 		return errors.New("Invalid commit to delete.")
 	}
 
 	// Gets head commit
-	commit, err := getCommit("HEAD", repo)
+	commit, err := GetCommit("HEAD", repo)
 	if err != nil {
 		return err
 	}
@@ -136,15 +153,11 @@ func RevertCommit(repo *git.Repository, commitsBack int, reset bool) error {
 	return err
 }
 
-func GetLastCommit(repo *git.Repository) (*git.Commit, error) {
-	return getCommit("HEAD", repo)
-}
-
 // Checks out the given commit without moving head,
 // such that the working directory will match the commit contents.
 // Doesn't change current branch ref.
 func checkout(name string, repo *git.Repository) error {
-	commit, err := getCommit(name, repo)
+	commit, err := GetCommit(name, repo)
 	if err != nil {
 		return err
 	}
@@ -164,16 +177,15 @@ func checkout(name string, repo *git.Repository) error {
 }
 
 func CommitExists(name string, repo *git.Repository) bool {
-	_, err := getCommit(name, repo)
+	_, err := GetCommit(name, repo)
 	return err == nil
 }
 
 // If anything is added, creates a new branch with a commit called WIP
-func WIPCommit(repo *git.Repository) error {
+func SaveWIP(repo *git.Repository) error {
 	statusOps := git.StatusOptions{
-		Show:     git.StatusShowIndexAndWorkdir,
-		Flags:    git.StatusOptIncludeUntracked,
-		Pathspec: pathSpecs(repo),
+		Show:  git.StatusShowIndexAndWorkdir,
+		Flags: git.StatusOptIncludeUntracked,
 	}
 	status, err := repo.StatusList(&statusOps)
 	if err != nil {
@@ -193,23 +205,23 @@ func WIPCommit(repo *git.Repository) error {
 	if err != nil {
 		return err
 	}
-	if strings.HasSuffix(name, helper.WipString) {
+	if strings.HasSuffix(name, WipString) {
 		return nil
 	}
 
 	// If WIP already exists, delete
-	if CommitExists(name+helper.WipString, repo) {
-		err = DeleteBranch(name+helper.WipString, repo)
+	if CommitExists(name+WipString, repo) {
+		err = DeleteBranch(name+WipString, repo)
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err = CreateBranch(name+helper.WipString, repo)
+	_, err = CreateBranch(name+WipString, repo)
 	if err != nil {
 		return err
 	}
-	err = moveHead(name+helper.WipString, repo)
+	err = moveHead(name+WipString, repo)
 	if err != nil {
 		return err
 	}
@@ -239,18 +251,18 @@ func WIPCommit(repo *git.Repository) error {
 
 // Deletes the WIP commit at head if any, restoring the contents to the working directory
 // and resuming a merge if one was ongoing.
-func WIPUncommit(repo *git.Repository) error {
+func RestoreWIP(repo *git.Repository) error {
 	name, err := CurrentBranchName(repo)
 	if err != nil {
 		return err
 	}
 
 	// No WIP branch
-	if !CommitExists(name+helper.WipString, repo) {
+	if !CommitExists(name+WipString, repo) {
 		return nil
 	}
 
-	wipCommit, err := getCommit(name+helper.WipString, repo)
+	wipCommit, err := GetCommit(name+WipString, repo)
 	if err != nil {
 		return err
 	}
@@ -264,7 +276,7 @@ func WIPUncommit(repo *git.Repository) error {
 	// If the WIP commit has two parents a merge was ongoing.
 	if wipCommit.ParentCount() > 1 {
 		mergeHead := wipCommit.Parent(1).Id().String()
-		err := StartMerge(mergeHead, repo)
+		err := startMerge(mergeHead, repo)
 		if err != nil {
 			return err
 		}
@@ -295,12 +307,12 @@ func WIPUncommit(repo *git.Repository) error {
 	}
 
 	// Restore the contents of the WIP commit to the working directory.
-	err = checkout(name+helper.WipString, repo)
+	err = checkout(name+WipString, repo)
 	if err != nil {
 		return err
 	}
 
-	err = DeleteBranch(name+helper.WipString, repo)
+	err = DeleteBranch(name+WipString, repo)
 	if err != nil {
 		return err
 	}

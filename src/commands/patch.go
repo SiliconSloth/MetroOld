@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	git "github.com/libgit2/git2go"
-	"gitwrapper"
+	"metro"
 )
 
 func execPatch(repo *git.Repository, positionals []string, options map[string]string) error {
 	// Uses existing message as default
-	commit, err := gitwrapper.GetLastCommit(repo)
+	commit, err := metro.GetCommit("HEAD", repo)
 	if err != nil {
 		return err
 	}
@@ -23,21 +23,12 @@ func execPatch(repo *git.Repository, positionals []string, options map[string]st
 		return errors.New("Unexpected argument: " + positionals[1])
 	}
 
-	err = gitwrapper.AssertMerging(repo)
+	err = metro.Patch(repo, message)
 	if err != nil {
 		return err
 	}
 
-	err = gitwrapper.RevertLastCommit(repo, false)
-	if err != nil {
-		return err
-	}
-	err = gitwrapper.Commit(repo, message, "HEAD^{commit}")
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Patched Commit.")
+	fmt.Println("Patched commit.")
 	return nil
 }
 

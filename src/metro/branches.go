@@ -1,14 +1,15 @@
-package gitwrapper
+package metro
 
 import (
 	"errors"
 	git "github.com/libgit2/git2go"
+	"strings"
 )
 
 // Create a new branch from the current head with the specified name.
 // Returns the branch
 func CreateBranch(name string, repo *git.Repository) (*git.Branch, error) {
-	commit, err := getCommit("HEAD", repo)
+	commit, err := GetCommit("HEAD", repo)
 	if err != nil {
 		return nil, err
 	}
@@ -21,10 +22,34 @@ func CreateBranch(name string, repo *git.Repository) (*git.Branch, error) {
 	return branch, nil
 }
 
+func SwitchBranch(name string, repo *git.Repository) error {
+	if strings.HasSuffix(name, WipString) {
+		return errors.New("Can't switch to wip line.")
+	}
+	if !CommitExists(name, repo) {
+		return errors.New("No branch called " + name + ".")
+	}
+
+	err := SaveWIP(repo)
+	if err != nil {
+		return err
+	}
+	err = checkoutBranch(name, repo)
+	if err != nil {
+		return err
+	}
+	err = RestoreWIP(repo)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Checks out the given branch by name
 // name - Plain Text branch name (e.g. 'master')
 // repo - Repo to checkout from
-func CheckoutBranch(name string, repo *git.Repository) error {
+func checkoutBranch(name string, repo *git.Repository) error {
 	err := checkout(name, repo)
 	if err != nil {
 		return err

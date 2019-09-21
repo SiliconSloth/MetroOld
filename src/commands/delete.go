@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	git "github.com/libgit2/git2go"
-	"gitwrapper"
+	"metro"
 	"strconv"
 )
 
@@ -24,7 +24,7 @@ func execDelete(repo *git.Repository, positionals []string, options map[string]s
 				return err
 			}
 		}
-		return gitwrapper.RevertCommit(repo, deletes, false)
+		return metro.DeleteCommits(repo, deletes, false)
 	}
 	if positionals[0] == "line" {
 		if len(positionals) < 2 {
@@ -34,7 +34,7 @@ func execDelete(repo *git.Repository, positionals []string, options map[string]s
 			return errors.New("Unexpected argument: " + positionals[2])
 		}
 		name := positionals[1]
-		current, err := gitwrapper.CurrentBranchName(repo)
+		current, err := metro.CurrentBranchName(repo)
 		if err != nil {
 			return err
 		}
@@ -42,7 +42,7 @@ func execDelete(repo *git.Repository, positionals []string, options map[string]s
 			return errors.New("Can't delete current branch.")
 		}
 
-		return gitwrapper.DeleteBranch(name, repo)
+		return metro.DeleteBranch(name, repo)
 	}
 	return nil
 }

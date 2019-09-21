@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/libgit2/git2go"
-	"gitwrapper"
+	"metro"
 )
 
 func execCreate(repo *git.Repository, positionals []string, _ map[string]string) error {
@@ -20,11 +20,7 @@ func execCreate(repo *git.Repository, positionals []string, _ map[string]string)
 		return errors.New("Unexpected argument: " + positionals[1])
 	}
 
-	repo, err := gitwrapper.Init(directory)
-	if err != nil {
-		return err
-	}
-	err = gitwrapper.Commit(repo, "Create repository")
+	repo, err := metro.Create(directory)
 	if err != nil {
 		return err
 	}

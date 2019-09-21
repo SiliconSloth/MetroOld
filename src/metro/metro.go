@@ -1,15 +1,26 @@
-package gitwrapper
+package metro
 
 import (
 	"errors"
 	git "github.com/libgit2/git2go"
-	"helper"
-	"strings"
+)
+
+const (
+	WipString = "#wip"
 )
 
 // Initialize an empty git repository in the specified directory.
-func Init(directory string) (*git.Repository, error) {
-	return git.InitRepository(directory+"/.git", false)
+func Create(directory string) (*git.Repository, error) {
+	repo, err := git.InitRepository(directory+"/.git", false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = Commit(repo, "Create repository")
+	if err != nil {
+		return nil, err
+	}
+	return repo, nil
 }
 
 // Raises an error if the repo is currently in merging state.
@@ -45,13 +56,4 @@ func getConflicts(index *git.Index) ([]git.IndexConflict, error) {
 		conflicts = append(conflicts, conflict)
 	}
 	return conflicts, nil
-}
-
-// Returns the path specs for the Ignore files
-func pathSpecs(repo *git.Repository) []string {
-	// Finds any ignore files
-	ignore := make([]string, 0)
-	ignore = append(ignore, strings.Split(helper.GetFileContents(repo.Workdir()+"/.gitignore"), "\n")...)
-	ignore = append(ignore, strings.Split(helper.GetFileContents(repo.Workdir()+"/.metroignore"), "\n")...)
-	return ignore
 }

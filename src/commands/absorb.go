@@ -4,9 +4,7 @@ import (
 	"errors"
 	"fmt"
 	git "github.com/libgit2/git2go"
-	"gitwrapper"
-	"helper"
-	"strings"
+	"metro"
 )
 
 func execAbsorb(repo *git.Repository, positionals []string, options map[string]string) error {
@@ -18,35 +16,15 @@ func execAbsorb(repo *git.Repository, positionals []string, options map[string]s
 	}
 	name := positionals[0]
 
-	if strings.HasSuffix(name, helper.WipString) {
-		return errors.New("Can't absorb WIP branch.")
-	}
-
-	err := gitwrapper.AssertMerging(repo)
+	conflicts, err := metro.Absorb(name, repo)
 	if err != nil {
 		return err
 	}
 
-	err = gitwrapper.StartMerge(name, repo)
-	if err != nil {
-		return err
-	}
-
-	index, err := repo.Index()
-	if err != nil {
-		return err
-	}
-
-	if index.HasConflicts() {
+	if conflicts {
 		fmt.Println("Conflicts occurred, please resolve.")
 	} else {
-		// If no conflicts occurred make the merge commit right away.
-		err = gitwrapper.MergeCommit(repo)
-		if err != nil {
-			return err
-		}
-
-		current, err := gitwrapper.CurrentBranchName(repo)
+		current, err := metro.CurrentBranchName(repo)
 		if err != nil {
 			return err
 		}

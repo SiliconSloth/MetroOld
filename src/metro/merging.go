@@ -1,15 +1,48 @@
-package gitwrapper
+package metro
 
 import (
 	"errors"
 	git "github.com/libgit2/git2go"
 	"io/ioutil"
+	"strings"
 )
+
+func Absorb(mergeHead string, repo *git.Repository) (bool, error) {
+	if strings.HasSuffix(mergeHead, WipString) {
+		return false, errors.New("Can't absorb WIP branch.")
+	}
+
+	err := AssertMerging(repo)
+	if err != nil {
+		return false, err
+	}
+
+	err = startMerge(mergeHead, repo)
+	if err != nil {
+		return false, err
+	}
+
+	index, err := repo.Index()
+	if err != nil {
+		return false, err
+	}
+
+	if index.HasConflicts() {
+		return true, nil
+	} else {
+		// If no conflicts occurred make the merge commit right away.
+		err = Resolve(repo)
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+}
 
 // Merge the specified commit into the current branch head.
 // The repo will be left in a merging state, possibly with conflicts in the index.
-func StartMerge(name string, repo *git.Repository) error {
-	otherHead, err := getCommit(name, repo)
+func startMerge(name string, repo *git.Repository) error {
+	otherHead, err := GetCommit(name, repo)
 	if err != nil {
 		return err
 	}
@@ -51,7 +84,12 @@ func StartMerge(name string, repo *git.Repository) error {
 }
 
 // Create a commit of the ongoing merge and clear the merge state and conflicts from the repo.
-func MergeCommit(repo *git.Repository) error {
+func Resolve(repo *git.Repository) error {
+	merging := MergeOngoing(repo)
+	if !merging {
+		return errors.New("You can only resolve conflicts while absorbing.")
+	}
+
 	mergedID, err := mergeHeadID(repo)
 	if err != nil {
 		return err
@@ -85,7 +123,7 @@ func MergeCommit(repo *git.Repository) error {
 
 // Get the commit ID of the merge head. Assumes a merge is ongoing.
 func mergeHeadID(repo *git.Repository) (string, error) {
-	mergeHead, err := getCommit("MERGE_HEAD^{commit}", repo)
+	mergeHead, err := GetCommit("MERGE_HEAD^{commit}", repo)
 	if err != nil {
 		return "", err
 	}
