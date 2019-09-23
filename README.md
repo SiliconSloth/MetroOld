@@ -1,3 +1,5 @@
+### This version of Metro is discontinued, we are now rewriting in Metro in C++. Please see the new repository [here](https://github.com/SiliconSloth/Metro).
+
 ![Banner](banner.png)
 # Simple and flexible version control and code syncing
 # WORK IN PROGRESS
